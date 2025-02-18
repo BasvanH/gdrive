@@ -13,28 +13,37 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Prepare upload url
+      - name: Prepare upload URL
         run: |
           UPLOAD_URL="$(jq -r '.release.upload_url' "$GITHUB_EVENT_PATH" | sed -e "s/{?name,label}$/?name=${ARCHIVE_NAME}/")"
           echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
 
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        with:
-          target: armv7-unknown-linux-musleabihf
-
-      - name: Build application
+      - name: Install cross-compilation toolchain (glibc 2.30)
         run: |
-          sudo apt update && sudo apt install -y clang llvm
-          export TARGET_CC=clang
-          export TARGET_AR=llvm-ar
-          cargo build --release --target=armv7-unknown-linux-musleabihf
+          sudo apt update
+          sudo apt install -y gcc-9-arm-linux-gnueabihf libc6-armhf-cross libc6-dev-armhf-cross
+
+      - name: Setup Rust toolchain
+        uses: actions-rust-lang/setup-rust-toolchain@v1
+        with:
+          target: armv7-unknown-linux-gnueabihf
+
+      - name: Build application (glibc 2.30 compatible)
+        run: |
+          export CC=arm-linux-gnueabihf-gcc
+          export CXX=arm-linux-gnueabihf-g++
+          cargo build --release --target=armv7-unknown-linux-gnueabihf
+
+      - name: Check linked glibc version
+        run: |
+          arm-linux-gnueabihf-readelf -a target/armv7-unknown-linux-gnueabihf/release/$APP_NAME | grep 'GLIBC_'
 
       - name: Create archive
         run: |
-          tar -czf $ARCHIVE_NAME -C target/armv7-unknown-linux-musleabihf/release $APP_NAME
+          tar -czf $ARCHIVE_NAME -C target/armv7-unknown-linux-gnueabihf/release $APP_NAME
 
       - name: Upload release asset
         uses: actions/upload-release-asset@v1
