@@ -2,6 +2,7 @@
 [target.armv7-unknown-linux-gnueabihf]
 linker = "arm-linux-gnueabihf-gcc"
 ar = "arm-linux-gnueabihf-ar"
+rustflags = ["-C", "target-feature=+v7,+vfp3"]
 
 # Andere ARM targets kunnen nog steeds rust-lld gebruiken als fallback
 [target.armv7-unknown-linux-musleabihf]
