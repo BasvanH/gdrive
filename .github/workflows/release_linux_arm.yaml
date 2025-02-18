@@ -23,7 +23,7 @@ jobs:
           UPLOAD_URL="$(jq -r '.release.upload_url' "$GITHUB_EVENT_PATH" | sed -e "s/{?name,label}$/?name=${ARCHIVE_NAME}/")"
           echo "UPLOAD_URL=$UPLOAD_URL" >> $GITHUB_ENV
 
-      - name: Install cross-compilation toolchain (glibc 2.30)
+      - name: Install cross-compilation toolchain
         run: |
           sudo apt update
           sudo apt install -y \
@@ -36,15 +36,20 @@ jobs:
         with:
           target: armv7-unknown-linux-gnueabihf
 
+      - name: Configure Cross Compilation for Rust
+        run: |
+          echo "[target.armv7-unknown-linux-gnueabihf]" >> ~/.cargo/config
+          echo "linker = \"arm-linux-gnueabihf-gcc\"" >> ~/.cargo/config
+
       - name: Build application (glibc 2.30 compatible)
         run: |
           export CC=arm-linux-gnueabihf-gcc
           export CXX=arm-linux-gnueabihf-g++
           export AR=arm-linux-gnueabihf-ar
           export CARGO_TARGET_ARMV7_UNKNOWN_LINUX_GNUEABIHF_LINKER=arm-linux-gnueabihf-gcc
-          export RUSTFLAGS="-C linker=arm-linux-gnueabihf-gcc -C target-feature=-crt-static"
+          export RUSTFLAGS="-C linker=arm-linux-gnueabihf-gcc"
 
-          cargo build --release --target=armv7-unknown-linux-gnueabihf
+          cargo build --release --target=armv7-unknown-linux-gnueabihf -Zbuild-std
 
       - name: Check linked glibc version
         run: |
