@@ -2,6 +2,3 @@
 linker = "arm-linux-gnueabihf-gcc"
 ar = "arm-linux-gnueabihf-ar"
 rustflags = ["-C", "target-feature=+v7,+vfp3"]
-
-[target.armv7-unknown-linux-gnueabihf.dependencies.ring]
-features = ["use_heap"]  # Soms helpt deze optie
