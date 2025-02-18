@@ -7,6 +7,7 @@ on:
 env:
   APP_NAME: gdrive
   ARCHIVE_NAME: gdrive_linux-arm.tar.gz
+  RING_FORCE_BUILD_RS: "1"  # Forceer handmatige compilatie van `ring`
 
 jobs:
   build:
@@ -24,7 +25,7 @@ jobs:
       - name: Install cross-compilation toolchain
         run: |
           sudo apt update
-          sudo apt install -y gcc-9-arm-linux-gnueabihf libc6-armhf-cross libc6-dev-armhf-cross
+          sudo apt install -y gcc-9-arm-linux-gnueabihf libc6-armhf-cross libc6-dev-armhf-cross clang lld
 
       - name: Setup Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -36,13 +37,16 @@ jobs:
           echo "CC=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
           echo "AR=arm-linux-gnueabihf-ar" >> $GITHUB_ENV
           echo "CARGO_CFG_TARGET_FEATURE=+v7,+vfp3" >> $GITHUB_ENV
+          echo "RING_FORCE_BUILD_RS=1" >> $GITHUB_ENV
 
-      - name: Force older `ring` version if needed
+      - name: Remove pregenerated assembly files from `ring`
         run: |
-          cargo update -p ring --precise 0.16.19 || true
+          rm -rf ~/.cargo/registry/src/index.crates.io-*/ring-0.16.20/pregenerated || true
 
       - name: Build application
         run: |
+          cargo clean
+          cargo update -p ring --precise 0.16.19 || true  # Indien nodig downgrade `ring`
           cargo build --release --target=armv7-unknown-linux-gnueabihf
 
       - name: Verify linked glibc version
