@@ -7,6 +7,8 @@ on:
 env:
   APP_NAME: gdrive
   ARCHIVE_NAME: gdrive_linux-arm.tar.gz
+  RING_ALLOW_MISSING_ASM: 1
+  CARGO_NET_GIT_FETCH_WITH_CLI: true
 
 jobs:
   build:
@@ -24,7 +26,10 @@ jobs:
       - name: Install cross-compilation toolchain (glibc 2.30)
         run: |
           sudo apt update
-          sudo apt install -y gcc-9-arm-linux-gnueabihf libc6-armhf-cross libc6-dev-armhf-cross clang llvm
+          sudo apt install -y \
+            gcc-9-arm-linux-gnueabihf \
+            libc6-armhf-cross libc6-dev-armhf-cross \
+            clang llvm binutils-arm-linux-gnueabihf
 
       - name: Setup Rust toolchain
         uses: actions-rust-lang/setup-rust-toolchain@v1
@@ -33,11 +38,12 @@ jobs:
 
       - name: Build application (glibc 2.30 compatible)
         run: |
-          export CC=arm-linux-gnueabihf-gcc
-          export CXX=arm-linux-gnueabihf-g++
-          export AR=arm-linux-gnueabihf-ar
+          export CC=clang
+          export CXX=clang++
+          export AR=llvm-ar
           export CARGO_PROFILE_RELEASE_BUILD_OVERRIDE_DEBUG=true
           export RUSTFLAGS="-C target-feature=-crt-static"
+
           cargo build --release --target=armv7-unknown-linux-gnueabihf
 
       - name: Check linked glibc version
