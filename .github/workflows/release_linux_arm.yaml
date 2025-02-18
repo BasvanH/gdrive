@@ -7,7 +7,7 @@ on:
 env:
   APP_NAME: gdrive
   ARCHIVE_NAME: gdrive_linux-arm.tar.gz
-  RING_FORCE_BUILD_RS: "1"  # Forceer handmatige compilatie van `ring`
+  RING_FORCE_BUILD_RS: "1"
 
 jobs:
   build:
@@ -39,14 +39,15 @@ jobs:
           echo "CARGO_CFG_TARGET_FEATURE=+v7,+vfp3" >> $GITHUB_ENV
           echo "RING_FORCE_BUILD_RS=1" >> $GITHUB_ENV
 
-      - name: Remove pregenerated assembly files from `ring`
+      - name: Ensure correct dependency versions
         run: |
-          rm -rf ~/.cargo/registry/src/index.crates.io-*/ring-0.16.20/pregenerated || true
+          cargo update -p ring --precise 0.16.20
+          cargo update -p rustls --precise 0.20.7
+          cargo update -p hyper-rustls --precise 0.23.2
 
       - name: Build application
         run: |
           cargo clean
-          cargo update -p ring --precise 0.16.19 || true  # Indien nodig downgrade `ring`
           cargo build --release --target=armv7-unknown-linux-gnueabihf
 
       - name: Verify linked glibc version
