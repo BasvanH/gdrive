@@ -26,3 +26,6 @@ tabwriter = "1.2.1"
 tar = "0.4.38"
 tempfile = "3.3.0"
 tokio = { version = "1.23.0", features = ["full"] }
+ring = "0.16.20"
+rustls = "0.20.7"
+hyper-rustls = "0.23.2"
