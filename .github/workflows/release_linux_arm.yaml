@@ -34,8 +34,12 @@ jobs:
       - name: Set environment variables for linker
         run: |
           echo "CC=arm-linux-gnueabihf-gcc" >> $GITHUB_ENV
-          echo "CXX=arm-linux-gnueabihf-g++" >> $GITHUB_ENV
           echo "AR=arm-linux-gnueabihf-ar" >> $GITHUB_ENV
+          echo "CARGO_CFG_TARGET_FEATURE=+v7,+vfp3" >> $GITHUB_ENV
+
+      - name: Force older `ring` version if needed
+        run: |
+          cargo update -p ring --precise 0.16.19 || true
 
       - name: Build application
         run: |
